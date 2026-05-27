@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard IoT - Monitoramento de Temperatura</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">🌡️ Dashboard IoT - Monitoramento de Temperatura</h1>
+            <p class="text-gray-600 text-lg">Visualização interativa de leituras de dispositivos IoT</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                <h3 class="text-gray-500 text-sm font-semibold uppercase tracking-wider mb-2">Total de Dispositivos</h3>
+                <p class="text-4xl font-bold text-blue-600" id="total-dispositivos">3</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                <h3 class="text-gray-500 text-sm font-semibold uppercase tracking-wider mb-2">Total de Leituras</h3>
+                <p class="text-4xl font-bold text-green-600" id="total-leituras">50</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                <h3 class="text-gray-500 text-sm font-semibold uppercase tracking-wider mb-2">Temperatura Média Geral</h3>
+                <p class="text-4xl font-bold text-orange-600" id="temp-media">31.2°C</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">📊 Média de Temperatura por Dispositivo</h2>
+            <div id="grafico-barras"></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">⏰ Leituras por Hora do Dia</h2>
+            <div id="grafico-linhas"></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">📈 Temperaturas Máximas e Mínimas por Dia</h2>
+            <div id="grafico-diario"></div>
+        </div>
+
+        <footer class="text-center mt-8 text-gray-500">
+            <p>Projeto Acadêmico - Pipeline de Dados com IoT e Docker</p>
+        </footer>
+    </div>
+
+    <script>
+        const dados = [
+            {id: "__export__.temp_log_0_123456", dispositivo: "Room Admin", data: "2018-07-28", hora: 0, temp: 29.5, local: "In"},
+            {id: "__export__.temp_log_1_234567", dispositivo: "Room Admin", data: "2018-07-28", hora: 0, temp: 29.2, local: "In"},
+            {id: "__export__.temp_log_2_345678", dispositivo: "Room Admin", data: "2018-07-28", hora: 1, temp: 28.9, local: "In"},
+            {id: "__export__.temp_log_3_456789", dispositivo: "Room Kitchen", data: "2018-07-28", hora: 1, temp: 31.2, local: "In"},
+            {id: "__export__.temp_log_4_567890", dispositivo: "Room Admin", data: "2018-07-28", hora: 2, temp: 28.7, local: "In"},
+            {id: "__export__.temp_log_5_678901", dispositivo: "Room Office", data: "2018-07-28", hora: 2, temp: 27.5, local: "In"},
+            {id: "__export__.temp_log_6_789012", dispositivo: "Room Admin", data: "2018-07-28", hora: 3, temp: 28.5, local: "In"},
+            {id: "__export__.temp_log_7_890123", dispositivo: "Room Admin", data: "2018-07-28", hora: 3, temp: 28.3, local: "In"},
+            {id: "__export__.temp_log_8_901234", dispositivo: "Room Admin", data: "2018-07-28", hora: 4, temp: 28.1, local: "In"},
+            {id: "__export__.temp_log_9_012345", dispositivo: "Room Admin", data: "2018-07-28", hora: 4, temp: 28.0, local: "In"},
+            {id: "__export__.temp_log_10_112233", dispositivo: "Room Admin", data: "2018-07-28", hora: 5, temp: 27.9, local: "In"},
+            {id: "__export__.temp_log_11_223344", dispositivo: "Room Admin", data: "2018-07-28", hora: 5, temp: 27.8, local: "In"},
+            {id: "__export__.temp_log_12_334455", dispositivo: "Room Admin", data: "2018-07-28", hora: 6, temp: 28.0, local: "In"},
+            {id: "__export__.temp_log_13_445566", dispositivo: "Room Admin", data: "2018-07-28", hora: 6, temp: 28.5, local: "In"},
+            {id: "__export__.temp_log_14_556677", dispositivo: "Room Admin", data: "2018-07-28", hora: 7, temp: 29.0, local: "In"},
+            {id: "__export__.temp_log_15_667788", dispositivo: "Room Admin", data: "2018-07-28", hora: 7, temp: 29.5, local: "In"},
+            {id: "__export__.temp_log_16_778899", dispositivo: "Room Admin", data: "2018-07-28", hora: 8, temp: 30.0, local: "In"},
+            {id: "__export__.temp_log_17_889900", dispositivo: "Room Kitchen", data: "2018-07-28", hora: 8, temp: 32.0, local: "In"},
+            {id: "__export__.temp_log_18_990011", dispositivo: "Room Admin", data: "2018-07-28", hora: 9, temp: 30.5, local: "In"},
+            {id: "__export__.temp_log_19_001122", dispositivo: "Room Admin", data: "2018-07-28", hora: 9, temp: 31.0, local: "In"},
+            {id: "__export__.temp_log_20_121314", dispositivo: "Room Admin", data: "2018-07-28", hora: 10, temp: 31.5, local: "In"},
+            {id: "__export__.temp_log_21_131415", dispositivo: "Room Admin", data: "2018-07-28", hora: 10, temp: 32.0, local: "In"},
+            {id: "__export__.temp_log_22_141516", dispositivo: "Room Admin", data: "2018-07-28", hora: 11, temp: 32.5, local: "In"},
+            {id: "__export__.temp_log_23_151617", dispositivo: "Room Admin", data: "2018-07-28", hora: 11, temp: 33.0, local: "In"},
+            {id: "__export__.temp_log_24_161718", dispositivo: "Room Admin", data: "2018-07-28", hora: 12, temp: 33.5, local: "In"},
+            {id: "__export__.temp_log_25_171819", dispositivo: "Room Admin", data: "2018-07-28", hora: 12, temp: 34.0, local: "In"},
+            {id: "__export__.temp_log_26_181920", dispositivo: "Room Admin", data: "2018-07-28", hora: 13, temp: 34.5, local: "In"},
+            {id: "__export__.temp_log_27_192021", dispositivo: "Room Admin", data: "2018-07-28", hora: 13, temp: 35.0, local: "In"},
+            {id: "__export__.temp_log_28_202122", dispositivo: "Room Admin", data: "2018-07-28", hora: 14, temp: 35.5, local: "In"},
+            {id: "__export__.temp_log_29_212223", dispositivo: "Room Admin", data: "2018-07-28", hora: 14, temp: 36.0, local: "Out"},
+            {id: "__export__.temp_log_30_222324", dispositivo: "Room Admin", data: "2018-07-28", hora: 15, temp: 36.5, local: "Out"},
+            {id: "__export__.temp_log_31_232425", dispositivo: "Room Admin", data: "2018-07-28", hora: 15, temp: 37.0, local: "Out"},
+            {id: "__export__.temp_log_32_242526", dispositivo: "Room Admin", data: "2018-07-28", hora: 16, temp: 37.5, local: "Out"},
+            {id: "__export__.temp_log_33_252627", dispositivo: "Room Admin", data: "2018-07-28", hora: 16, temp: 37.0, local: "Out"},
+            {id: "__export__.temp_log_34_262728", dispositivo: "Room Admin", data: "2018-07-28", hora: 17, temp: 36.5, local: "Out"},
+            {id: "__export__.temp_log_35_272829", dispositivo: "Room Admin", data: "2018-07-28", hora: 17, temp: 36.0, local: "Out"},
+            {id: "__export__.temp_log_36_282930", dispositivo: "Room Admin", data: "2018-07-28", hora: 18, temp: 35.5, local: "Out"},
+            {id: "__export__.temp_log_37_293031", dispositivo: "Room Admin", data: "2018-07-28", hora: 18, temp: 35.0, local: "Out"},
+            {id: "__export__.temp_log_38_303132", dispositivo: "Room Admin", data: "2018-07-28", hora: 19, temp: 34.5, local: "Out"},
+            {id: "__export__.temp_log_39_313233", dispositivo: "Room Admin", data: "2018-07-28", hora: 19, temp: 34.0, local: "Out"},
+            {id: "__export__.temp_log_40_323334", dispositivo: "Room Admin", data: "2018-07-28", hora: 20, temp: 33.5, local: "Out"},
+            {id: "__export__.temp_log_41_333435", dispositivo: "Room Admin", data: "2018-07-28", hora: 20, temp: 33.0, local: "In"},
+            {id: "__export__.temp_log_42_343536", dispositivo: "Room Admin", data: "2018-07-28", hora: 21, temp: 32.5, local: "In"},
+            {id: "__export__.temp_log_43_353637", dispositivo: "Room Admin", data: "2018-07-28", hora: 21, temp: 32.0, local: "In"},
+            {id: "__export__.temp_log_44_363738", dispositivo: "Room Admin", data: "2018-07-28", hora: 22, temp: 31.5, local: "In"},
+            {id: "__export__.temp_log_45_373839", dispositivo: "Room Admin", data: "2018-07-28", hora: 22, temp: 31.0, local: "In"},
+            {id: "__export__.temp_log_46_383940", dispositivo: "Room Admin", data: "2018-07-28", hora: 23, temp: 30.5, local: "In"},
+            {id: "__export__.temp_log_47_394041", dispositivo: "Room Admin", data: "2018-07-28", hora: 23, temp: 30.0, local: "In"},
+            {id: "__export__.temp_log_48_404142", dispositivo: "Room Office", data: "2018-07-29", hora: 0, temp: 28.5, local: "In"},
+            {id: "__export__.temp_log_49_414243", dispositivo: "Room Office", data: "2018-07-29", hora: 0, temp: 28.0, local: "In"}
+        ];
+
+        function calcularMetricas() {
+            const dispositivos = [...new Set(dados.map(d => d.dispositivo))];
+            const totalLeituras = dados.length;
+            const tempMedia = (dados.reduce((sum, d) => sum + d.temp, 0) / totalLeituras).toFixed(1);
+
+            document.getElementById('total-dispositivos').textContent = dispositivos.length;
+            document.getElementById('total-leituras').textContent = totalLeituras;
+            document.getElementById('temp-media').textContent = tempMedia + '°C';
+        }
+
+        function criarGraficoBarras() {
+            const tempPorDispositivo = {};
+            dados.forEach(d => {
+                if (!tempPorDispositivo[d.dispositivo]) {
+                    tempPorDispositivo[d.dispositivo] = [];
+                }
+                tempPorDispositivo[d.dispositivo].push(d.temp);
+            });
+
+            const x = Object.keys(tempPorDispositivo);
+            const y = Object.values(tempPorDispositivo).map(temps => 
+                (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1)
+            );
+
+            const data = [{
+                x: x,
+                y: y,
+                type: 'bar',
+                marker: {
+                    color: y,
+                    colorscale: 'Viridis'
+                }
+            }];
+
+            const layout = {
+                title: 'Temperatura Média por Dispositivo IoT',
+                xaxis: { title: 'Dispositivo' },
+                yaxis: { title: 'Temperatura Média (°C)' },
+                height: 500
+            };
+
+            Plotly.newPlot('grafico-barras', data, layout);
+        }
+
+        function criarGraficoLinhas() {
+            const leiturasPorHora = {};
+            for (let i = 0; i < 24; i++) {
+                leiturasPorHora[i] = 0;
+            }
+            dados.forEach(d => {
+                leiturasPorHora[d.hora]++;
+            });
+
+            const x = Object.keys(leiturasPorHora);
+            const y = Object.values(leiturasPorHora);
+
+            const data = [{
+                x: x,
+                y: y,
+                mode: 'lines+markers',
+                line: { color: '#1f77b4', width: 2 }
+            }];
+
+            const layout = {
+                title: 'Quantidade de Leituras por Hora',
+                xaxis: { title: 'Hora do Dia', dtick: 1 },
+                yaxis: { title: 'Total de Leituras' },
+                height: 500
+            };
+
+            Plotly.newPlot('grafico-linhas', data, layout);
+        }
+
+        function criarGraficoDiario() {
+            const tempPorDia = {};
+            dados.forEach(d => {
+                if (!tempPorDia[d.data]) {
+                    tempPorDia[d.data] = { temps: [] };
+                }
+                tempPorDia[d.data].temps.push(d.temp);
+            });
+
+            const x = Object.keys(tempPorDia);
+            const yMax = Object.values(tempPorDia).map(d => Math.max(...d.temps));
+            const yMin = Object.values(tempPorDia).map(d => Math.min(...d.temps));
+
+            const data = [
+                {
+                    x: x,
+                    y: yMax,
+                    mode: 'lines+markers',
+                    name: 'Temperatura Máxima',
+                    line: { color: '#e74c3c', width: 2 }
+                },
+                {
+                    x: x,
+                    y: yMin,
+                    mode: 'lines+markers',
+                    name: 'Temperatura Mínima',
+                    line: { color: '#3498db', width: 2 }
+                }
+            ];
+
+            const layout = {
+                title: 'Temperaturas Máximas e Mínimas Diárias',
+                xaxis: { title: 'Data' },
+                yaxis: { title: 'Temperatura (°C)' },
+                height: 500,
+                hovermode: 'x unified'
+            };
+
+            Plotly.newPlot('grafico-diario', data, layout);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            calcularMetricas();
+            criarGraficoBarras();
+            criarGraficoLinhas();
+            criarGraficoDiario();
+        });
+    </script>
+</body>
+</html>
